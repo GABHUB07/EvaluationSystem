@@ -5,7 +5,7 @@ require_once 'includes/db_connection.php';
 echo "<h2>Google Sheets Debug Test</h2>";
 
 try {
-    $manager = getDataManager();
+    $pdo = getPDOForDebug(); 
     
     // Test if we can access the Google Sheets service
     $reflection = new ReflectionClass($manager);
