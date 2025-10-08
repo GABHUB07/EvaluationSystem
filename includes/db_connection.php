@@ -1,5 +1,5 @@
 <?php
-// includes/db_connection.php
+// includes/db_connection.php - FIXED VERSION
 require_once __DIR__ . '/../vendor/autoload.php';
 
 use Google\Client;
@@ -16,15 +16,21 @@ class HybridDataManager {
             throw new Exception("DATABASE_URL environment variable not set");
         }
 
+        // FIXED: Better database URL parsing for Render
         $dbopts = parse_url($dbUrl);
-        $dsn = sprintf(
-            "pgsql:host=%s;port=%s;dbname=%s",
-            $dbopts["host"],
-            $dbopts["port"],
-            ltrim($dbopts["path"], "/")
-        );
+        
+        // Handle cases where port might not be in URL (Render sometimes omits it)
+        $host = $dbopts["host"] ?? 'localhost';
+        $port = $dbopts["port"] ?? '5432'; // Default PostgreSQL port
+        $dbname = isset($dbopts["path"]) ? ltrim($dbopts["path"], "/") : 'evaluation_system';
+        $username = $dbopts["user"] ?? 'postgres';
+        $password = $dbopts["pass"] ?? '';
 
-        $this->pdo = new PDO($dsn, $dbopts["user"], $dbopts["pass"], [
+        $dsn = "pgsql:host=$host;port=$port;dbname=$dbname";
+
+        error_log("Connecting to: host=$host, port=$port, dbname=$dbname");
+
+        $this->pdo = new PDO($dsn, $username, $password, [
             PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
             PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
         ]);
@@ -112,7 +118,7 @@ class HybridDataManager {
     }
 }
 
-// Helper
+// Helper functions
 function getDataManager() {
     static $manager = null;
     if (!$manager) {
@@ -120,8 +126,21 @@ function getDataManager() {
     }
     return $manager;
 }
-function getPDO() { return getDataManager()->getPDO(); }
-function isDatabaseAvailable() { try { getPDO(); return true; } catch (Exception $e) { return false; } }
+
+function getPDO() { 
+    return getDataManager()->getPDO(); 
+}
+
+function isDatabaseAvailable() { 
+    try { 
+        getPDO(); 
+        return true; 
+    } catch (Exception $e) { 
+        error_log("Database not available: " . $e->getMessage());
+        return false; 
+    } 
+}
+
 function logActivity($action, $details, $status = 'info', $userId = null) {
     $logMessage = sprintf("[%s] User: %s, Action: %s, Status: %s, Details: %s",
         date('Y-m-d H:i:s'), $userId ?? 'unknown', $action, $status, $details);
@@ -134,6 +153,7 @@ function getTeacherAssignments() {
         $stmt = $pdo->query("SELECT * FROM teacher_assignments WHERE is_active = true ORDER BY program, section, teacher_name");
         return $stmt->fetchAll();
     } catch (Exception $e) {
+        error_log("Get teacher assignments error: " . $e->getMessage());
         return [];
     }
 }
@@ -149,6 +169,7 @@ function getStudentEvaluations($studentUsername = null) {
         }
         return $stmt->fetchAll();
     } catch (Exception $e) {
+        error_log("Get student evaluations error: " . $e->getMessage());
         return [];
     }
 }
@@ -160,6 +181,7 @@ function hasEvaluatedTeacher($studentUsername, $teacherName = null) {
         $stmt->execute([$studentUsername, $teacherName]);
         return $stmt->fetch() !== false;
     } catch (Exception $e) {
+        error_log("Has evaluated teacher error: " . $e->getMessage());
         return false;
     }
 }
@@ -233,7 +255,7 @@ function addTeacherAssignment($teacherName, $section, $program) {
     }
 }
 
-// New functions for working with separated comments
+// Functions for working with separated comments
 function getTeacherPositiveComments($teacherName) {
     try {
         $pdo = getPDO();
@@ -354,6 +376,40 @@ function searchComments($searchTerm, $commentType = 'both') {
         return [];
     }
 }
+
+// New function for direct database testing
+function testDatabaseConnection() {
+    try {
+        $pdo = getPDO();
+        $stmt = $pdo->query("SELECT NOW() as current_time, version() as postgres_version");
+        $result = $stmt->fetch();
+        
+        return [
+            'success' => true,
+            'current_time' => $result['current_time'],
+            'postgres_version' => $result['postgres_version']
+        ];
+    } catch (Exception $e) {
+        return [
+            'success' => false,
+            'error' => $e->getMessage()
+        ];
+    }
+}
+
+// Emergency fallback connection function
+function getEmergencyPDO() {
+    $dbUrl = getenv("DATABASE_URL");
+    if (!$dbUrl) {
+        throw new Exception("DATABASE_URL not set");
+    }
+    
+    // Simple approach - just replace postgresql:// with pgsql://
+    $dsn = str_replace('postgresql://', 'pgsql://', $dbUrl);
+    
+    return new PDO($dsn, [
+        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+    ]);
+}
 ?>
-
-
