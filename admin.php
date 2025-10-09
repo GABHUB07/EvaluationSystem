@@ -81,9 +81,7 @@ try {
         FROM evaluations 
         ORDER BY teacher_name, program, submitted_at DESC
     ")->fetchAll(PDO::FETCH_ASSOC);
-    
-    try {
-    // Query to get all unique students and count their completed evaluations
+
     $allStudentsQuery = "
         SELECT 
             student_name,
@@ -97,11 +95,6 @@ try {
     ";
     
     $allStudents = $pdo->query($allStudentsQuery)->fetchAll(PDO::FETCH_ASSOC);
-    
-    } catch (Exception $e) {
-        error_log("Student Status Error: " . $e->getMessage());
-        $allStudents = [];
-        }
     
 } catch (Exception $e) {
     error_log("Admin Dashboard Error: " . $e->getMessage());
