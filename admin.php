@@ -1353,106 +1353,107 @@ ob_end_clean(); // Clean the output buffer
             <?php endif; ?>
         </div>
 
-            <!-- All Students Completion Status -->
-<div class="card">
-    <h3><i class="fas fa-user-graduate"></i> Student Evaluation Completion Status</h3>
-    
-    <div class="action-buttons">
-        <button class="btn btn-info" onclick="refreshStudentStatus()">
-            <i class="fas fa-sync-alt"></i> Refresh Status
-        </button>
-        <button class="btn btn-success" onclick="exportStudentStatus()">
-            <i class="fas fa-file-export"></i> Export to CSV
-        </button>
-    </div>
-    
-    <div class="completion-stats" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px;">
-        <div class="stat-card" style="background: #e8f5e8;">
-            <div class="stat-number" id="totalStudents"><?php echo count($allStudents); ?></div>
-            <div class="stat-label">Total Students</div>
-        </div>
-        <div class="stat-card" style="background: #e8f5e8;">
-            <div class="stat-number" id="completedStudents">
-                <?php 
-                $completed = 0;
-                foreach ($allStudents as $student) {
-                    // Adjust this logic based on your actual completion criteria
-                    if ($student['evaluated_teachers'] >= 3) { // Example: completed if evaluated 3+ teachers
-                        $completed++;
-                    }
-                }
-                echo $completed;
-                ?>
+        <!-- All Students Completion Status -->
+        <div class="card">
+            <h3><i class="fas fa-user-graduate"></i> Student Evaluation Completion Status</h3>
+            
+            <div class="action-buttons">
+                <button class="btn btn-info" onclick="refreshStudentStatus()">
+                    <i class="fas fa-sync-alt"></i> Refresh Status
+                </button>
+                <button class="btn btn-success" onclick="exportStudentStatus()">
+                    <i class="fas fa-file-export"></i> Export to CSV
+                </button>
             </div>
-            <div class="stat-label">Completed Evaluations</div>
-        </div>
-        <div class="stat-card" style="background: #e8f5e8;">
-            <div class="stat-number" id="completionRate">
-                <?php 
-                $rate = count($allStudents) > 0 ? ($completed / count($allStudents)) * 100 : 0;
-                echo number_format($rate, 1) . '%';
-                ?>
-            </div>
-            <div class="stat-label">Completion Rate</div>
-        </div>
-    </div>
-    
-    <?php if (empty($allStudents)): ?>
-        <p class="loading">No student data available.</p>
-    <?php else: ?>
-        <div class="table-wrapper">
-            <table class="evaluation-table">
-                <thead>
-                    <tr>
-                        <th>Student Name</th>
-                        <th>Section</th>
-                        <th>Program</th>
-                        <th>Teachers Evaluated</th>
-                        <th>Last Evaluation</th>
-                        <th>Status</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php foreach ($allStudents as $student): 
-                        $isCompleted = $student['evaluated_teachers'] >= 3; // Adjust threshold as needed
-                        $statusClass = $isCompleted ? 'status-completed' : 'status-pending';
-                        $statusText = $isCompleted ? 'Completed' : 'In Progress';
-                    ?>
-                    <tr class="<?php echo $statusClass; ?>">
-                        <td>
-                            <i class="fas fa-user-graduate"></i>
-                            <?php echo htmlspecialchars($student['student_name']); ?>
-                        </td>
-                        <td><?php echo htmlspecialchars($student['section']); ?></td>
-                        <td><?php echo htmlspecialchars($student['program']); ?></td>
-                        <td>
-                            <strong><?php echo $student['evaluated_teachers']; ?></strong> teachers
-                        </td>
-                        <td>
-                            <?php 
-                            if ($student['last_evaluation']) {
-                                echo date('M j, g:i A', strtotime($student['last_evaluation']));
-                            } else {
-                                echo 'Not started';
+            
+            <div class="completion-stats" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px;">
+                <div class="stat-card" style="background: #e8f5e8;">
+                    <div class="stat-number" id="totalStudents"><?php echo count($allStudents); ?></div>
+                    <div class="stat-label">Total Students</div>
+                </div>
+                <div class="stat-card" style="background: #e8f5e8;">
+                    <div class="stat-number" id="completedStudents">
+                        <?php 
+                        $completed = 0;
+                        foreach ($allStudents as $student) {
+                            // Adjust this logic based on your actual completion criteria
+                            if ($student['evaluated_teachers'] >= 3) { // Example: completed if evaluated 3+ teachers
+                                $completed++;
                             }
+                        }
+                        echo $completed;
+                        ?>
+                    </div>
+                    <div class="stat-label">Completed Evaluations</div>
+                </div>
+                <div class="stat-card" style="background: #e8f5e8;">
+                    <div class="stat-number" id="completionRate">
+                        <?php 
+                        $rate = count($allStudents) > 0 ? ($completed / count($allStudents)) * 100 : 0;
+                        echo number_format($rate, 1) . '%';
+                        ?>
+                    </div>
+                    <div class="stat-label">Completion Rate</div>
+                </div>
+            </div>
+            
+            <?php if (empty($allStudents)): ?>
+                <p class="loading">No student data available.</p>
+            <?php else: ?>
+                <div class="table-wrapper">
+                    <table class="evaluation-table">
+                        <thead>
+                            <tr>
+                                <th>Student Name</th>
+                                <th>Section</th>
+                                <th>Program</th>
+                                <th>Teachers Evaluated</th>
+                                <th>Last Evaluation</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($allStudents as $student): 
+                                $isCompleted = $student['evaluated_teachers'] >= 3; // Adjust threshold as needed
+                                $statusClass = $isCompleted ? 'status-completed' : 'status-pending';
+                                $statusText = $isCompleted ? 'Completed' : 'In Progress';
                             ?>
-                        </td>
-                        <td>
-                            <span class="status-badge <?php echo $statusClass; ?>">
-                                <?php if ($isCompleted): ?>
-                                    <i class="fas fa-check-circle"></i>
-                                <?php else: ?>
-                                    <i class="fas fa-clock"></i>
-                                <?php endif; ?>
-                                <?php echo $statusText; ?>
-                            </span>
-                        </td>
-                    </tr>
-                    <?php endforeach; ?>
-                </tbody>
-            </table>
+                            <tr class="<?php echo $statusClass; ?>">
+                                <td>
+                                    <i class="fas fa-user-graduate"></i>
+                                    <?php echo htmlspecialchars($student['student_name']); ?>
+                                </td>
+                                <td><?php echo htmlspecialchars($student['section']); ?></td>
+                                <td><?php echo htmlspecialchars($student['program']); ?></td>
+                                <td>
+                                    <strong><?php echo $student['evaluated_teachers']; ?></strong> teachers
+                                </td>
+                                <td>
+                                    <?php 
+                                    if ($student['last_evaluation']) {
+                                        echo date('M j, g:i A', strtotime($student['last_evaluation']));
+                                    } else {
+                                        echo 'Not started';
+                                    }
+                                    ?>
+                                </td>
+                                <td>
+                                    <span class="status-badge <?php echo $statusClass; ?>">
+                                        <?php if ($isCompleted): ?>
+                                            <i class="fas fa-check-circle"></i>
+                                        <?php else: ?>
+                                            <i class="fas fa-clock"></i>
+                                        <?php endif; ?>
+                                        <?php echo $statusText; ?>
+                                    </span>
+                                </td>
+                            </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+            <?php endif; ?>
         </div>
-</div>
     </div>
 
     <!-- Loading Overlay -->
@@ -1728,38 +1729,37 @@ ob_end_clean(); // Clean the output buffer
         }
     });
 
-        // Student status functions
-function refreshStudentStatus() {
-    location.reload();
-}
+    // Student status functions
+    function refreshStudentStatus() {
+        location.reload();
+    }
 
-function exportStudentStatus() {
-    // Simple CSV export implementation
-    let csv = 'Student Name,Section,Program,Teachers Evaluated,Last Evaluation,Status\n';
-    
-    document.querySelectorAll('.evaluation-table tbody tr').forEach(row => {
-        const cells = row.querySelectorAll('td');
-        const studentName = cells[0].textContent.replace('▶', '').trim();
-        const section = cells[1].textContent;
-        const program = cells[2].textContent;
-        const teachersEvaluated = cells[3].textContent.split(' ')[0];
-        const lastEvaluation = cells[4].textContent;
-        const status = cells[5].textContent;
+    function exportStudentStatus() {
+        // Simple CSV export implementation
+        let csv = 'Student Name,Section,Program,Teachers Evaluated,Last Evaluation,Status\n';
         
-        csv += `"${studentName}","${section}","${program}","${teachersEvaluated}","${lastEvaluation}","${status}"\n`;
-    });
-    
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.setAttribute('hidden', '');
-    a.setAttribute('href', url);
-    a.setAttribute('download', 'student_evaluation_status.csv');
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-}
-
+        document.querySelectorAll('.evaluation-table tbody tr').forEach(row => {
+            const cells = row.querySelectorAll('td');
+            const studentName = cells[0].textContent.replace('▶', '').trim();
+            const section = cells[1].textContent;
+            const program = cells[2].textContent;
+            const teachersEvaluated = cells[3].textContent.split(' ')[0];
+            const lastEvaluation = cells[4].textContent;
+            const status = cells[5].textContent;
+            
+            csv += `"${studentName}","${section}","${program}","${teachersEvaluated}","${lastEvaluation}","${status}"\n`;
+        });
+        
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.setAttribute('hidden', '');
+        a.setAttribute('href', url);
+        a.setAttribute('download', 'student_evaluation_status.csv');
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+    }
     </script>
 </body>
 </html>
