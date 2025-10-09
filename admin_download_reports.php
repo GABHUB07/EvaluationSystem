@@ -19,7 +19,7 @@ function getReportsData() {
     $reportsDir = __DIR__ . '/reports/';
     $teachers = [];
     
-    // Get teacher folders with their PDFs
+    // Get teacher folders with their PDFs - ONLY SUMMARY REPORTS
     $teacherReportsPath = $reportsDir . 'Teacher Evaluation Reports/Reports/';
     if (is_dir($teacherReportsPath)) {
         $teacherFolders = scandir($teacherReportsPath);
@@ -42,7 +42,9 @@ function getReportsData() {
                 $pdfFiles = scandir($programPath);
                 
                 foreach ($pdfFiles as $pdf) {
-                    if (pathinfo($pdf, PATHINFO_EXTENSION) === 'pdf') {
+                    // Only include SUMMARY reports, exclude individual student reports
+                    if (pathinfo($pdf, PATHINFO_EXTENSION) === 'pdf' && 
+                        stripos($pdf, 'summary') !== false) {
                         $pdfs[] = [
                             'name' => $pdf,
                             'path' => 'reports/Teacher Evaluation Reports/Reports/' . $teacherName . '/' . $program . '/' . $pdf,
@@ -461,6 +463,15 @@ function formatBytes($bytes) {
         .notification.info {
             border-left: 4px solid #17a2b8;
         }
+        
+        .summary-badge {
+            background: #28a745;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.75em;
+            margin-left: 8px;
+        }
     </style>
 </head>
 <body>
@@ -468,7 +479,7 @@ function formatBytes($bytes) {
 
     <div class="container">
         <div class="header">
-            <h1>📥 Download Evaluation Reports</h1>
+            <h1>📥 Download Summary Reports</h1>
             <div class="header-actions">
                 <a href="admin.php" class="btn btn-primary">← Back to Dashboard</a>
                 <button id="refreshBtn" class="btn btn-refresh" onclick="refreshReports()">
@@ -489,7 +500,7 @@ function formatBytes($bytes) {
             </div>
             <div class="stat-card" id="pdfStat">
                 <div class="stat-number" id="pdfCount"><?php echo $totalPDFs; ?></div>
-                <div class="stat-label">Total PDF Reports</div>
+                <div class="stat-label">Summary PDF Reports</div>
             </div>
         </div>
 
@@ -497,15 +508,15 @@ function formatBytes($bytes) {
             <?php if (empty($teachers)): ?>
             <div class="section">
                 <div class="empty-state">
-                    <h3>📄 No Reports Available</h3>
-                    <p>Generate reports first from the admin dashboard.</p>
+                    <h3>📄 No Summary Reports Available</h3>
+                    <p>Generate summary reports first from the admin dashboard.</p>
                 </div>
             </div>
             <?php else: ?>
             <div class="section">
-                <h2>👥 Teacher Evaluation Reports</h2>
+                <h2>👥 Teacher Summary Reports</h2>
                 <div class="alert alert-info">
-                    <strong>ℹ️ Note:</strong> Click on a teacher's name to view and download their reports by program. Use the refresh button to check for changes.
+                    <strong>ℹ️ Note:</strong> Only summary reports are shown. Individual student reports have been excluded. Click on a teacher's name to view and download their summary reports by program.
                 </div>
                 
                 <div id="teacherList">
@@ -520,13 +531,16 @@ function formatBytes($bytes) {
                             <div class="program-section">
                                 <div class="program-title">
                                     📖 <?php echo htmlspecialchars($programName); ?>
-                                    <span class="badge badge-blue"><?php echo count($pdfs); ?> file<?php echo count($pdfs) > 1 ? 's' : ''; ?></span>
+                                    <span class="badge badge-blue"><?php echo count($pdfs); ?> summary report<?php echo count($pdfs) > 1 ? 's' : ''; ?></span>
                                 </div>
                                 <ul class="pdf-list">
                                     <?php foreach ($pdfs as $pdf): ?>
                                     <li class="pdf-item">
                                         <div class="pdf-info">
-                                            <div class="pdf-name">📄 <?php echo htmlspecialchars($pdf['name']); ?></div>
+                                            <div class="pdf-name">
+                                                📊 <?php echo htmlspecialchars($pdf['name']); ?>
+                                                <span class="summary-badge">SUMMARY</span>
+                                            </div>
                                             <div class="pdf-size"><?php echo formatBytes($pdf['size']); ?></div>
                                         </div>
                                         <a href="<?php echo htmlspecialchars($pdf['path']); ?>" class="download-btn" download>
@@ -651,14 +665,14 @@ function formatBytes($bytes) {
             
             // Show notification
             if (hasChanges) {
-                showNotification('Reports refreshed successfully! Changes detected.', 'success');
+                showNotification('Summary reports refreshed successfully! Changes detected.', 'success');
             } else {
-                showNotification('Reports are up to date. No changes found.', 'info');
+                showNotification('Summary reports are up to date. No changes found.', 'info');
             }
             
         } catch (error) {
             console.error('Refresh error:', error);
-            showNotification('Failed to refresh reports. Please try again.', 'error');
+            showNotification('Failed to refresh summary reports. Please try again.', 'error');
         } finally {
             // Reset button state
             isRefreshing = false;
@@ -676,8 +690,8 @@ function formatBytes($bytes) {
             container.innerHTML = `
                 <div class="section">
                     <div class="empty-state">
-                        <h3>📄 No Reports Available</h3>
-                        <p>Generate reports first from the admin dashboard.</p>
+                        <h3>📄 No Summary Reports Available</h3>
+                        <p>Generate summary reports first from the admin dashboard.</p>
                     </div>
                 </div>
             `;
@@ -686,9 +700,9 @@ function formatBytes($bytes) {
         
         let html = `
             <div class="section">
-                <h2>👥 Teacher Evaluation Reports</h2>
+                <h2>👥 Teacher Summary Reports</h2>
                 <div class="alert alert-info">
-                    <strong>ℹ️ Note:</strong> Click on a teacher's name to view and download their reports by program. Use the refresh button to check for changes.
+                    <strong>ℹ️ Note:</strong> Only summary reports are shown. Individual student reports have been excluded. Click on a teacher's name to view and download their summary reports by program.
                 </div>
                 <div id="teacherList">
         `;
@@ -712,7 +726,7 @@ function formatBytes($bytes) {
                     <div class="program-section">
                         <div class="program-title">
                             📖 ${escapeHtml(programName)}
-                            <span class="badge badge-blue">${pdfs.length} file${pdfs.length > 1 ? 's' : ''}</span>
+                            <span class="badge badge-blue">${pdfs.length} summary report${pdfs.length > 1 ? 's' : ''}</span>
                         </div>
                         <ul class="pdf-list">
                 `;
@@ -721,7 +735,10 @@ function formatBytes($bytes) {
                     html += `
                         <li class="pdf-item">
                             <div class="pdf-info">
-                                <div class="pdf-name">📄 ${escapeHtml(pdf.name)}</div>
+                                <div class="pdf-name">
+                                    📊 ${escapeHtml(pdf.name)}
+                                    <span class="summary-badge">SUMMARY</span>
+                                </div>
                                 <div class="pdf-size">${formatBytes(pdf.size)}</div>
                             </div>
                             <a href="${escapeHtml(pdf.path)}" class="download-btn" download>
@@ -756,14 +773,7 @@ function formatBytes($bytes) {
         div.textContent = text;
         return div.innerHTML;
     }
-
-    // Optional: Auto-refresh every 30 seconds
-    // Uncomment the lines below if you want automatic refresh
-    /*
-    setInterval(() => {
-        refreshReports();
-    }, 30000); // 30 seconds
-    */
     </script>
 </body>
 </html>
+[file content end]
